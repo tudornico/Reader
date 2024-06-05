@@ -13,10 +13,13 @@ import android.provider.MediaStore;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.PopupWindow;
+import android.widget.TextView;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -33,26 +36,14 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-    }
+        Button cameraButton =  findViewById(R.id.CameraButton);
+        cameraButton.setOnClickListener(v -> {
+            Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+            startActivityForResult(cameraIntent , 1337);
 
-    /**
-     * Intent for opening the camera and taking the photo of the counter
-     * @param view Context of the view we are in
-     */
-    public void OpenCamera(View view) {
-        Button cameraButton = (Button) findViewById(R.id.CameraButton);
-        cameraButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                startActivityForResult(cameraIntent,1337);
-
-            }
         });
-        LayoutInflater inflater = (LayoutInflater) this.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        PopupWindow pw = new PopupWindow(inflater.inflate(R.layout.counter_display, null, false),100,100, true);
-        pw.showAtLocation( this.findViewById(R.id.textView),Gravity.CENTER, 0, 0);
     }
+
 
     /**
      * method for calling when the camera even is finished
@@ -60,19 +51,39 @@ public class MainActivity extends AppCompatActivity {
      * @param resultCode
      * @param data
      */
-    protected void onCameraActivity(int requestCode , int resultCode , Intent data){
+    protected void onActivityResult(int requestCode , int resultCode , Intent data){
+        super.onActivityResult(requestCode , resultCode , data);
         if(requestCode == 1337){
             Bitmap image = (Bitmap) data.getExtras().get("data");
             storeMyImage(image);
+            String scriptPath = "com/example/reader/Scripts/ReadNumbers.sh";
+            String parameter = "com/example/reader/PhotoFile/CurrentPhoto";
             try{
-                String[] command ={"/bin/bash", "-c", "com/example/reader/Scripts/ReadNumbers.sh " +"com/example/reader/PhotoFile/CurrentPhoto" };
+               Process process = Runtime.getRuntime().exec(new String[]{scriptPath , parameter});
+               BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+               String output = reader.readLine();
 
-                Process process = Runtime.getRuntime().exec(command);
-                BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-                String output = reader.readLine();
+                LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
 
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+                View popUp = inflater.inflate(R.layout.counter_display , null);
+                int width = LinearLayout.LayoutParams.WRAP_CONTENT;
+                int height = LinearLayout.LayoutParams.WRAP_CONTENT;
+                boolean focusable = true; // lets taps outside the popup also dismiss it
+                final PopupWindow popupWindow = new PopupWindow(popUp, width, height, focusable);
+                TextView popText = this.findViewById(R.id.counterDisplay);
+                popText.setText(output);
+                popupWindow.showAtLocation(this.findViewById(R.id.counterDisplay), Gravity.TOP, 0, 0);
+
+                popUp.setOnTouchListener(new View.OnTouchListener() {
+                    @Override
+                    public boolean onTouch(View v, MotionEvent event) {
+                        popupWindow.dismiss();
+                        return true;
+                    }
+                });
+             }
+            catch (IOException e){
+                e.printStackTrace();
             }
         }
     }
