@@ -58,10 +58,10 @@ public class MainActivity extends AppCompatActivity {
             storeMyImage(image);
             String scriptPath = "com/example/reader/Scripts/ReadNumbers.sh";
             String parameter = "com/example/reader/PhotoFile/CurrentPhoto";
-            try{
-               Process process = Runtime.getRuntime().exec(new String[]{scriptPath , parameter});
-               BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-               String output = reader.readLine();
+
+//               Process process = Runtime.getRuntime().exec(new String[]{scriptPath , parameter});
+//               BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+               String output = "";
 
                 LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
 
@@ -82,11 +82,11 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
              }
-            catch (IOException e){
-                e.printStackTrace();
-            }
+//            catch (IOException e){
+//                e.printStackTrace();
+//            }
         }
-    }
+
 
     private void storeMyImage(Bitmap photo){
         File pictureFile = getOutputMediaFile();
